@@ -84,10 +84,18 @@ tourism |>
 tourism |>
   filter(State == "Tasmania",
          Region == "East Coast") |>
-  write_csv('tasmania.csv')
+  mutate(Quarter = as.Date(Quarter)) |>
+  write_csv('./datos/tasmania.csv')
 ```
 
 ```{r}
 tasmania <- read_csv("./datos/Tasmania.csv")
 tasmania
+```
+
+```{r}
+tourism |>
+  model(classical_decomposition(Trips, type = "additive")) |>
+  filter(Purpose == "Holiday") |>
+  autoplot()
 ```

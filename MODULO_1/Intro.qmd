@@ -1,0 +1,93 @@
+---
+title: "INTRO"
+author: "Esteban"
+format: html
+editor: visual
+---
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+
+## Running Code
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+1 + 1
+```
+
+You can add options to executable code like this
+
+```{r}
+#| echo: false
+2 * 2
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).
+
+```{r}
+#| message: false
+
+library(tidyverse)
+library(fpp3)
+```
+
+## Datos de turismo
+
+```{r}
+tourism
+```
+
+```{r}
+distinct(tourism, State)
+```
+
+Vamos a analizar el estado de Tasmania
+
+```{r}
+distinct(filter(tourism, State == "Tasmania"), Region)
+```
+
+```{r}
+filter(filter(tourism, State == "Tasmania"), Region == "East Coast")
+```
+
+```{r}
+summarise(group_by(as_tibble(filter(tourism, State == "Tasmania", Region == "East Coast")), Purpose), media = mean(Trips))
+```
+
+Vamos a usar el *Pipe* \|\> para mejorar el codigo anterior:
+
+```{r}
+tourism |>
+  filter(State == "Tasmania",
+         Region == "East Coast") |>
+  as_tibble() |>
+  group_by(Purpose) |>
+  summarise(media = mean(Trips))
+
+```
+
+```{r}
+tourism |>
+  filter(State == "Tasmania",
+         Region == "East Coast") |>
+  autoplot(Trips) + 
+  facet_wrap(vars(Purpose), scale = "free_y") + 
+  theme(legend.position = "none")
+```
+
+```{r}
+# Descomposicion de la serie de tiempo
+
+tourism |>
+  filter(State == "Tasmania",
+         Region == "East Coast") |>
+  write_csv('tasmania.csv')
+```
+
+```{r}
+tasmania <- read_csv("./datos/Tasmania.csv")
+tasmania
+```

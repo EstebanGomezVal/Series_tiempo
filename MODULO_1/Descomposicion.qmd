@@ -6,6 +6,118 @@ editor: visual
 ---
 
 ```{r}
-  tasmania = read.csv('./Datos/tasmania.csv')
+library(tidyverse)
+library(fpp3)
+```
+La funcion 'model()' sirve para ajustar uno o mas modelos a la(s) serie(s) de tiempo. Nos devuelve una tabla de modelos ('mable').
+
+```{r}
+tasmania <- tourism |> 
+  filter(State == "Tasmania",
+         Region == "East Coast")
+
+tasmania
+```
+
+```{r}
+tasmania |> 
+  model(classical_decomposition(Trips, type = "additive")) |>
+  components() |> 
+  autoplot() +
+  theme(legend.position = "bottom")
+```
+
+```{r}
+tasmania |> 
+  model(classical_decomposition(Trips, type = "additive")) |>
+  components() |> 
+  filter(Purpose == "Holiday") |> 
+  autoplot()
+```
+
+```{r}
+tasmania |> 
+  model(classical_decomposition(Trips, type = "additive")) |>
+  components() |> 
+  filter(Purpose == "Holiday") |> 
+  autoplot()
+
+tasmania |> 
+  model(classical_decomposition(Trips, type = "additive")) |>
+  components() |> 
+  filter(Purpose == "Business") |> 
+  autoplot()
+
+tasmania |> 
+  model(classical_decomposition(Trips, type = "additive")) |>
+  components() |> 
+  filter(Purpose == "Visiting") |> 
+  autoplot()
+
+tasmania |> 
+  model(classical_decomposition(Trips, type = "additive")) |>
+  components() |> 
+  filter(Purpose == "Other") |> 
+  autoplot()
+```
+
+```{r}
+aus_production |> 
+  autoplot(Gas)
+aus_production |> 
+  model(classical_decomposition(Gas, type = "multiplicative")) |> 
+  components() |> 
+  autoplot(
+```
+
+La función `model()` sirve para ajustar uno o más modelos a la(s) serie(s) de tiempo. Nos devuelve una tabla de modelos (`mable`).
+
+```{r}
+tasmania_comp <- tasmania |> 
+  model(
+    dcmp_clasica = classical_decomposition(Trips)
+  ) |> 
+  components()
+
+tasmania_comp
+
+tasmania_comp |> 
+  autoplot()
+```
+
+```{r}
+tasmania_comp |> 
+  filter(Purpose == "Holiday") |> 
+  ggplot(aes(x = Quarter, y = Trips)) +
+  geom_line(color = "grey", size = 2) +
+  geom_line(aes(y = season_adjust), color = "dodgerblue", size = 2)
+```
+
+```{r}
+aus_production |> 
+  model(STL(Gas, robust = TRUE)) |> 
+  components() |> 
+  ggplot(aes(x = Quarter, y = Gas)) +
+  geom_line(color = "grey", size = 1) +
+  geom_line(aes(y = trend), color = "firebrick", size = 1)
+
+aus_production |> 
+  model(STL(Gas, robust = TRUE)) |> 
+  components() |> 
+  ggplot(aes(x = Quarter, y = Gas)) +
+  geom_line(color = "grey", size = 1) +
+  geom_line(aes(y = season_adjust), color = "dodgerblue", size = 1)
+```
+
+## Descomposicion STL
+
+```{r}
+tasmania |>
+  filter(Purpose == "Holiday") |>
+  model(
+    STL(Trips ~ trend(window = 11) + season(window = "periodic"), robust = FALSE)
+        ) |>
+      components() |>
+      autoplot()
 ```
 

@@ -115,7 +115,7 @@ aus_production |>
 tasmania |>
   filter(Purpose == "Holiday") |>
   model(
-    STL(Trips ~ trend(window = 11) + season(window = "periodic"), robust = FALSE)
+    STL(Trips ~ trend(window = 11) + season(window = "periodic"), robust = TRUE)
         ) |>
       components() |>
       autoplot()

@@ -121,3 +121,153 @@ tasmania |>
       autoplot()
 ```
 
+### Graficas
+
+Grafica de tiempo
+```{r}
+aus_production |>
+  autoplot(Gas)
+
+```
+
+Graficas estacionales
+
+```{r}
+aus_production |>
+  gg_season(Gas) #estacionalidad a lo largo de los años
+```
+
+Grafica de subseries 
+
+```{r}
+aus_production |>
+  gg_subseries(Gas)
+```
+
+```{r}
+aus_production |>
+  gg_tsdisplay(Gas)
+```
+
+Ingenuo estacional - Repites por estacionalidad el valor hacia el futuro
+
+Metodo ingenuo: Toma el ultimo valor para todo lo que sigue
+
+Modelo de la media - Simplemente sacas la media y lo colocas en todos los dias que siguen
+
+Drift (Deriva) - Toma primer y ultimo valor y traza una linea recta
+
+### Benchmark models
+```{r}
+gas_fit <- aus_production |>
+  model(
+    media = MEAN(Gas),
+    naive = NAIVE(Gas),
+    seasonal_naive = SNAIVE(Gas),
+    drift = NAIVE(Gas ~ drift())
+  )
+
+gas_fit
+```
+```{r}
+gas_aug <- gas_fit |>
+  augment()
+gas_aug
+
+gas_aug |>
+  autoplot(.innov) +
+  facet_wrap(vars(.model), scale = "free_y") +
+  theme(legend.position = "none")
+
+gas_aug |>
+  group_by_key() |>
+  as_tibble() |>
+  summarise(media = mean(.resid, na.rm = TRUE))
+```
+
+```{r}
+#| warning: FALSE
+gas_fit |>
+  select(naive) |>
+  gg_tsresiduals()
+```
+1. No autocorrelacion: Relacion de lo actual depende de lo de antes.
+2. Media cero: 
+3. Varianza constante
+4. Distr. normal
+
+```{r}
+#| warning: false
+gas_fit |>
+  select(seasonal_naive) |>
+  gg_tsresiduals()
+```
+
+**Test de Box-Pierce**
+
+T = Total de periodos
+$r_k$ = k-esimo coeficiente de correlacion
+m = periodo estacional
+
+$$
+Q = T \sum_{k=1}^h r_k^2
+$$
+Se sugiere utilizar h=10 sin estacionalidad, h=2*m con estacionalidad h <= $\frac{T}{5}$
+
+Si Q=0, no hay correlacion, Ruido blanco
+
+Si Q diferente de 0, Autocorrelacion
+
+
+**Test de Ljung-Box**
+$$
+Q = T(T+2) \sum_{k=1}^{h} (T-k)^{-1} \cdot r_k^2
+$$
+P-value: Probabilidad exacta de cometer un error tipo I(Falso positivo)
+$\alpha$ = Nivel de significacncia (Nivel maximo para tolerar de error)
+$1-\alpha$ = Nivel de confianza
+
+p-value < $\alpha$ Rechazo $H_0$
+p-value > $\alpha$ No rechazo $H_0$
+
+Si rechazo hipotesis nula, significativamente existe correlacion
+
+```{r}
+gas_aug |>
+  features(.innov, box_pierce, lag = 8)
+```
+
+```{r} 
+# Pronostico de dos años en adelante
+gas_fit |>
+  forecast(h="2 years")
+```
+
+```{r}
+gas_fit2 <- aus_production |>
+  model(
+    stlf = decomposition_model(
+      STL(log(Gas) ~ season(window = "periodic"), robust = TRUE),
+      SNAIVE(season_year), 
+      RW(season_adjust ~ drift())
+      )
+    )
+
+gas_fit2
+```
+
+```{r}
+#| Warning = False
+gas_fit2 |>
+  gg_tsresiduals()
+
+gas_fit2 |>
+  augment() |>
+  features(.innov, ljung_box())
+
+```
+
+```{r}
+
+```
+

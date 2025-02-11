@@ -67,7 +67,7 @@ aus_production |>
 aus_production |> 
   model(classical_decomposition(Gas, type = "multiplicative")) |> 
   components() |> 
-  autoplot(
+  autoplot()
 ```
 
 La función `model()` sirve para ajustar uno o más modelos a la(s) serie(s) de tiempo. Nos devuelve una tabla de modelos (`mable`).
@@ -238,36 +238,102 @@ gas_aug |>
 ```
 
 ```{r} 
-# Pronostico de dos años en adelante
-gas_fit |>
-  forecast(h="2 years")
+gas_fit |> 
+  forecast(h = "2 years") |> 
+  autoplot(aus_production) +
+  facet_wrap(vars(.model), scales = "free_y")
 ```
 
 ```{r}
 gas_fit2 <- aus_production |>
   model(
     stlf = decomposition_model(
+      #especificar la descomposición
       STL(log(Gas) ~ season(window = "periodic"), robust = TRUE),
-      SNAIVE(season_year), 
+      #especificamos el modelo para la estacionalidad
+      SNAIVE(season_year),
       RW(season_adjust ~ drift())
+      ),
+    stlf2 = decomposition_model(
+      #especificar la descomposición
+      STL(log(Gas) ~ season(window = "periodic"), robust = TRUE),
+      #Si no especifica como modelar la estacionalidad, se toma SNAIVE por default
+      NAIVE(season_adjust)
       )
     )
-
 gas_fit2
 ```
 
 ```{r}
-#| Warning = False
+#| Warning = false
 gas_fit2 |>
+  select(stlf) |>
+  gg_tsresiduals()
+
+gas_fit2 |>
+  select(stlf2) |>
   gg_tsresiduals()
 
 gas_fit2 |>
   augment() |>
-  features(.innov, ljung_box())
+  features(.innov, ljung_box, lag = 8)
 
 ```
 
 ```{r}
+gas_fit2 |> 
+  forecast(h = "5 years") |> 
+  autoplot(aus_production, level = NULL)
+```
 
+```{r}
+gas_train <- aus_production |>
+  filter_index(. ~ "2005 Q2")
+
+gas_fit2 <- gas_train |>
+  model(
+    stlf = decomposition_model(
+      #especificar la descomposición
+      STL(log(Gas) ~ season(window = "periodic"), robust = TRUE),
+      #especificamos el modelo para la estacionalidad
+      SNAIVE(season_year),
+      RW(season_adjust ~ drift())
+      ),
+    stlf2 = decomposition_model(
+      #especificar la descomposición
+      STL(log(Gas) ~ season(window = "periodic"), robust = TRUE),
+      #Si no especifica como modelar la estacionalidad, se toma SNAIVE por default
+      NAIVE(season_adjust)
+      )
+    )
+
+gas_fit2 
+```
+
+Errores dependientes de escalas:
+
+MAE = mean$|e_k|$
+RMSE = $\sqrt{mean(e_k^2)}$
+
+Errores Porcentuales:
+MAPE = $mean(|p_k|)$ = $\frac{|y_k - y^l_k|}{y_k}$
+
+Errores escalados:
+
+- Para series no estacionales
+
+- Para series estacionales
+
+MASE = mean$|q_j|$
+RMSSE = $\sqrt{mean(q_j^2)}$
+
+## Combinacion de modelos
+
+```{r}
+gas_fit3 <- gas_fit2 |>
+  mutate(
+    stl_combinado = (stlf + stlf2)/2
+  )
+gas_fit3
 ```
 

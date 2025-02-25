@@ -9,6 +9,7 @@ editor: visual
 library(tidyverse)
 library(fpp3)
 ```
+
 La funcion 'model()' sirve para ajustar uno o mas modelos a la(s) serie(s) de tiempo. Nos devuelve una tabla de modelos ('mable').
 
 ```{r}
@@ -124,6 +125,7 @@ tasmania |>
 ### Graficas
 
 Grafica de tiempo
+
 ```{r}
 aus_production |>
   autoplot(Gas)
@@ -137,7 +139,7 @@ aus_production |>
   gg_season(Gas) #estacionalidad a lo largo de los años
 ```
 
-Grafica de subseries 
+Grafica de subseries
 
 ```{r}
 aus_production |>
@@ -158,6 +160,7 @@ Modelo de la media - Simplemente sacas la media y lo colocas en todos los dias q
 Drift (Deriva) - Toma primer y ultimo valor y traza una linea recta
 
 ### Benchmark models
+
 ```{r}
 gas_fit <- aus_production |>
   model(
@@ -169,6 +172,7 @@ gas_fit <- aus_production |>
 
 gas_fit
 ```
+
 ```{r}
 gas_aug <- gas_fit |>
   augment()
@@ -191,10 +195,11 @@ gas_fit |>
   select(naive) |>
   gg_tsresiduals()
 ```
-1. No autocorrelacion: Relacion de lo actual depende de lo de antes.
-2. Media cero: 
-3. Varianza constante
-4. Distr. normal
+
+1.  No autocorrelacion: Relacion de lo actual depende de lo de antes.
+2.  Media cero:
+3.  Varianza constante
+4.  Distr. normal
 
 ```{r}
 #| warning: false
@@ -205,30 +210,21 @@ gas_fit |>
 
 **Test de Box-Pierce**
 
-T = Total de periodos
-$r_k$ = k-esimo coeficiente de correlacion
-m = periodo estacional
+T = Total de periodos $r_k$ = k-esimo coeficiente de correlacion m = periodo estacional
 
 $$
 Q = T \sum_{k=1}^h r_k^2
-$$
-Se sugiere utilizar h=10 sin estacionalidad, h=2*m con estacionalidad h <= $\frac{T}{5}$
+$$ Se sugiere utilizar h=10 sin estacionalidad, h=2\*m con estacionalidad h \<= $\frac{T}{5}$
 
 Si Q=0, no hay correlacion, Ruido blanco
 
 Si Q diferente de 0, Autocorrelacion
 
-
-**Test de Ljung-Box**
-$$
+**Test de Ljung-Box** $$
 Q = T(T+2) \sum_{k=1}^{h} (T-k)^{-1} \cdot r_k^2
-$$
-P-value: Probabilidad exacta de cometer un error tipo I(Falso positivo)
-$\alpha$ = Nivel de significacncia (Nivel maximo para tolerar de error)
-$1-\alpha$ = Nivel de confianza
+$$ P-value: Probabilidad exacta de cometer un error tipo I(Falso positivo) $\alpha$ = Nivel de significacncia (Nivel maximo para tolerar de error) $1-\alpha$ = Nivel de confianza
 
-p-value < $\alpha$ Rechazo $H_0$
-p-value > $\alpha$ No rechazo $H_0$
+p-value \< $\alpha$ Rechazo $H_0$ p-value \> $\alpha$ No rechazo $H_0$
 
 Si rechazo hipotesis nula, significativamente existe correlacion
 
@@ -237,7 +233,7 @@ gas_aug |>
   features(.innov, box_pierce, lag = 8)
 ```
 
-```{r} 
+```{r}
 gas_fit |> 
   forecast(h = "2 years") |> 
   autoplot(aus_production) +
@@ -313,20 +309,17 @@ gas_fit2 |>
 
 Errores dependientes de escalas:
 
-MAE = mean$|e_k|$
-RMSE = $\sqrt{mean(e_k^2)}$
+MAE = mean$|e_k|$ RMSE = $\sqrt{mean(e_k^2)}$
 
-Errores Porcentuales:
-MAPE = $mean(|p_k|)$ = $\frac{|y_k - y^l_k|}{y_k}$
+Errores Porcentuales: MAPE = $mean(|p_k|)$ = $\frac{|y_k - y^l_k|}{y_k}$
 
 Errores escalados:
 
-- Para series no estacionales
+-   Para series no estacionales
 
-- Para series estacionales
+-   Para series estacionales
 
-MASE = mean$|q_j|$
-RMSSE = $\sqrt{mean(q_j^2)}$
+MASE = mean$|q_j|$ RMSSE = $\sqrt{mean(q_j^2)}$
 
 ```{r}
 gas_fcst <- gas_fit2 |> 
@@ -420,6 +413,7 @@ gas_fit4
 accuracy(gas_fit4) |> 
   arrange(MAPE)
 ```
+
 ```{r}
 gas_fcst4 <- gas_fit4 |> 
   forecast(h = "5 years")
@@ -436,3 +430,77 @@ gas_fcst4 |>
 aus_production |>
   autoplot(log(Gas))
 ```
+
+# Media ponderada
+
+### Suavisacion exponencial
+
+$$ y_{T+1} = \alpha y_T + \alpha (1-\alpha) y_{T-1} + \alpha (1-\alpha)^2 y_{T-2} + \cdots $$ $$ 0 < \alpha < 1$$
+
+Entre un alfa mas chica mas nos va a importar lo que ocurrio en el pasado. Entre alfa mas grande, nos va a importar menos el pasado y mas lo actual.
+
+-   Ecuacion de pronostico $$y_{t+h|t} = L_t$$
+
+<!-- -->
+
+-   Ecuacion de nivel $$L_t = \alpha y_t + (1 - \alpha)L_{t-1}$$ Modelo busca ser multiplicativo cuando la varianza va creciendo, sin embargo con una transformacion logaritmica, multiplicacion dentro de un log se suma log_1 + log_2 + ..., teniendo el mismo modelo aditivo pero con transformacion logaritmica.
+
+### Modelo de tendencia lineal de Holt
+
+-   Nivel
+
+-   Tendencia
+
+-   Pronostico
+
+$$
+\begin{align*}
+L_t &= \alpha y_t + (1 - \alpha)(L_{t-1} + T_{t-1}) \\
+T_t &= \beta (L_t - L_{t-1}) + (1 - \beta) T_{t-1} \\
+y_{t+h|t} &= L_t + hT_t
+\end{align*}
+$$
+
+### Metodos de tendencia amortiguada
+
+-   Nivel
+
+-   Tendencia
+
+-   Pronostico
+
+$$
+\begin{align*}
+L_t &= \alpha y_t + (1 - \alpha)(L_{t-1} + \phi T_{t-1}) \\
+T_t &= \beta (L_t - L_{t-1}) + (1 - \beta) \phi T_{t-1} \\
+y_{t+h|t} &= L_t + \phi^h T_t
+\end{align*}
+$$
+
+### Modelo de Holt-Winters
+
+-   Nivel
+
+-   Tendencia
+
+-   Estacionalidad
+
+-   Pronostico
+
+**Sumativa**
+
+$$
+\begin{align*}L_t &= \alpha (y_t - S_{t-m}) + (1 - \alpha)(L_{t-1} + T_{t-1}) \\T_t &= \beta (L_t - L_{t-1}) + (1 - \beta) T_{t-1} \\S_t &= \gamma (y_t - L_t) + (1 - \gamma) S_{t-m} \\y_{t+h|t} &= L_t + hT_t + S_{t-m+h}\end{align*}
+$$
+
+------------------------------------------------------------------------
+
+**Multiplicativa**
+$$
+\begin{align*}
+L_t &= \alpha \left(\frac{y_t}{S_{t-m}}\right) + (1 - \alpha)(L_{t-1} + T_{t-1}) \\
+T_t &= \beta (L_t - L_{t-1}) + (1 - \beta) T_{t-1} \\
+S_t &= \gamma \left(\frac{y_t}{L_t}\right) + (1 - \gamma) S_{t-m} \\
+y_{t+h|t} &= (L_t + hT_t) \cdot S_{t-m+h}
+\end{align*}
+$$

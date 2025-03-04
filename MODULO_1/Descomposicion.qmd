@@ -495,8 +495,7 @@ $$
 
 ------------------------------------------------------------------------
 
-**Multiplicativa**
-$$
+**Multiplicativa** $$
 \begin{align*}
 L_t &= \alpha \left(\frac{y_t}{S_{t-m}}\right) + (1 - \alpha)(L_{t-1} + T_{t-1}) \\
 T_t &= \beta (L_t - L_{t-1}) + (1 - \beta) T_{t-1} \\
@@ -504,3 +503,45 @@ S_t &= \gamma \left(\frac{y_t}{L_t}\right) + (1 - \gamma) S_{t-m} \\
 y_{t+h|t} &= (L_t + hT_t) \cdot S_{t-m+h}
 \end{align*}
 $$
+
+Estacionariedad es cuando la media y la varianza es constante en los distintos puntos de la serie de tiempo.
+
+Estabilizar la media -\> Diferienciacion $(\Delta Y_t = Y_t - Y_{t-1})$
+
+Diferienciacion estacional $\Delta Y_t^m = Y_t - Y{t-m}$
+
+Estabilizar la varianza -\> Box-cox
+
+$$
+B Y_t = Y_t-1
+\\
+Y_t^I = (1-B)Y_t
+\\
+Y_t^II = (1-B)^2Y_t
+$$
+
+Si el p-value es mayor a 0.5, la serie de tiempo si seria estacionaria.
+
+## AR(p)
+
+$AR(1) : T_t = \phi_0 + \phi Y_{t-1} + \epsilon_t$ - Caminata aleatoria
+
+## MA(p)
+
+$y_t = \theta_0 + \theta_1 \epsilon_{t-1} + \theta_2 \epsilon_{t-2} ...$
+
+Modelamos la autocorrelacion que poseen los datos, si no existe autocorrelacion no seran buenos modelos.
+
+Lo mejor es juntarlos para los modelos ARIMA
+
+## ARIMA
+
+$y'_t = c + \phi_1y'_t + ... + \phi_py'_{t-p} + \theta_1 \epsilon_{t-1} + ... + \theta_q \epsilon_{t-q} + \epsilon_t $
+
+-   AR = p (autorregresivo)
+
+<!-- -->
+
+-   I = d (estacionaria) - Se utiliza uniroot_ndiffs
+
+-   MA =q (media movil)

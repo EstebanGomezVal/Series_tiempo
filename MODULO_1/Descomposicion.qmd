@@ -536,12 +536,12 @@ Lo mejor es juntarlos para los modelos ARIMA
 
 ## ARIMA
 
-$y'_t = c + \phi_1y'_t + ... + \phi_py'_{t-p} + \theta_1 \epsilon_{t-1} + ... + \theta_q \epsilon_{t-q} + \epsilon_t $
+$y'_t = c + \phi_1y'_t + ... + \phi py'{t-p} + \theta_1 \epsilon{t-1} + ... + \theta q \epsilon{t-q} + \epsilon_t$
 
--   AR = p (autorregresivo)
-
-<!-- -->
-
+-   AR = p (autorregresivo), La autocorrelacion parcial (que tantos)
 -   I = d (estacionaria) - Se utiliza uniroot_ndiffs
+-   MA =q (media movil), La autocorrelacion (que tantos)
 
--   MA =q (media movil)
+## Autocorrelacion Parcial
+
+-   Se centra únicamente en la relación directa entre el valor actual y el rezago específico, excluyendo cualquier influencia mediada por rezagos intermedios.

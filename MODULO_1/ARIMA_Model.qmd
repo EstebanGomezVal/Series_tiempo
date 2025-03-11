@@ -1,6 +1,6 @@
 ---
 title: "ARIMA"
-author: Esteban Gomez 751178
+author: Esteban Gomez 751178, Cesar Santos
 format: 
   html:
     embed-resources: true

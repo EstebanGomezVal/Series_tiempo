@@ -1,0 +1,155 @@
+---
+title: "ARIMA"
+author: Esteban Gomez 751178
+format: 
+  html:
+    embed-resources: true
+editor: visual
+---
+
+embed-resources: true
+editor: visual
+---
+
+## Librerias
+
+```{r}
+library(tidyverse)
+library(fpp3)
+library(fable)
+```
+## Incluir datos
+
+```{r}
+aus_production |> 
+  autoplot(Gas)
+```
+
+Realizamos transformacion logaritmica ya que buscamos estabilizar la varianza
+
+```{r}
+aus_production <- aus_production %>%
+  mutate(log_Gas = log(Gas))
+
+aus_production %>%
+  autoplot(log_Gas)
+```
+Tenemos una varianza mas constante, ahora buscaremos la autocorrelacion y autocorrelacion parcial con el fin de buscar parametros para nuestro modelo ARIMA.
+
+## Autocorrelacion en datos
+
+```{r}
+aus_production |> 
+  gg_tsdisplay(log_Gas)
+```
+Con la autocorrelacion vista en los datos, $q = 0$.
+
+## Calcular la d
+
+Utilizaremos uniroot_n(s)diffs como metodo para conocer que valor de $d$ sera el que utilizaremos con el fin de convertir nuestra serie a una estacionaria.
+
+```{r}
+aus_production %>%
+  features(log_Gas, unitroot_ndiffs)
+```
+
+```{r}
+aus_production %>%
+  features(log_Gas, unitroot_nsdiffs)
+```
+Para nuestra serie estacionaria, necestiamos mínimo una diferenciación estacional y una no estacional.
+
+## Prueba KPSS
+
+```{r}
+aus_production %>%
+  features(difference(log_Gas, 1), unitroot_kpss)
+```
+Mediante la prueba KPSS con una diferenciación, podemos ver como la serie ya es estacionaria (p-value > 0.05)
+
+## Función de Autocorrelación Parcial
+
+```{r}
+aus_production %>% PACF(log_Gas) %>% autoplot()
+```
+El unico rezago que llega casi a 1 es el primero, por lo tanto utilizaremos $p = 1$ en nuestro modelo ARIMA.
+
+___
+
+# Modelo
+
+## Train-Test
+
+```{r}
+gas_train <- aus_production |> 
+  filter_index(. ~ "2005 Q2")
+```
+
+## Comparacion de modelos
+```{r}
+gas_fit <- gas_train |> 
+  model(
+    stl_combi1 = combination_model(
+      decomposition_model(
+        STL(log(Gas) ~ season(window = "periodic"), robust = TRUE),
+        RW(season_adjust ~ drift())
+      ),
+      decomposition_model(
+        STL(log(Gas) ~ season(window = "periodic"), robust = TRUE),
+        NAIVE(season_adjust)
+      )
+    ),
+    
+    stl_combi_weights = combination_weighted(
+      decomposition_model(
+        STL(log(Gas) ~ season(window = "periodic"), robust = TRUE),
+        RW(season_adjust ~ drift())
+      ),
+      decomposition_model(
+        STL(log(Gas) ~ season(window = "periodic"), robust = TRUE),
+        NAIVE(season_adjust)
+      ), 
+      weights = c(0.9, 1.1)
+    ),
+    
+    combinado_sin_stl = combination_model(
+      SNAIVE(log(Gas)),
+      RW(log(Gas) ~ drift())
+    ), 
+    
+    stl_combi_arima = combination_weighted(
+      decomposition_model(
+        STL(log(Gas) ~ season(window = "periodic"), robust = TRUE),  
+        RW(season_adjust ~ drift())
+      ),
+      decomposition_model(
+        STL(log(Gas) ~ season(window = "periodic"), robust = TRUE),
+        ARIMA(season_adjust ~ pdq(2,1,0) + PDQ(1,1,0))
+      ), 
+      weights = c(1.2, 0.8)
+    )
+  )
+```
+
+```{r}
+accuracy(gas_fit) |> 
+  arrange(MAPE)
+```
+
+## Pronostico
+```{r}
+gas_fcst <- gas_fit|> 
+  forecast(h = "5 years")
+
+gas_fcst |> 
+  autoplot(aus_production) +
+  facet_wrap(vars(.model), scales = "free_y", ncol = 1) +
+  theme(legend.position = "none")
+```
+## Prediccion a futuro
+```{r}
+gas_fcst |> 
+  accuracy(aus_production) |> 
+  arrange(MAPE)
+```
+

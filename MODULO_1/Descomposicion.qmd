@@ -545,3 +545,9 @@ $y'_t = c + \phi_1y'_t + ... + \phi py'{t-p} + \theta_1 \epsilon{t-1} + ... + \t
 ## Autocorrelacion Parcial
 
 -   Se centra únicamente en la relación directa entre el valor actual y el rezago específico, excluyendo cualquier influencia mediada por rezagos intermedios.
+
+$AIC$
+
+$AIC_c$
+
+$BIC$

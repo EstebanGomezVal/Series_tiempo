@@ -7,10 +7,6 @@ format:
 editor: visual
 ---
 
-embed-resources: true
-editor: visual
----
-
 ## Librerias
 
 ```{r}

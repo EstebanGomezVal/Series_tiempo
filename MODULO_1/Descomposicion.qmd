@@ -551,3 +551,11 @@ $AIC$
 $AIC_c$
 
 $BIC$
+
+### Multicolinealidad perfecta
+
+$$
+\lambda_1X_1 + \lambda_2 X_2 + ...+ \lambda_k X_k = 0
+$$
+
+Tiene una relacion una variable con otra (ejemplo, variable multiplicado por escalar representa otra, tiene que ser relacion lineal).

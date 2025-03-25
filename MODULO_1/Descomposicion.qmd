@@ -559,3 +559,7 @@ $$
 $$
 
 Tiene una relacion una variable con otra (ejemplo, variable multiplicado por escalar representa otra, tiene que ser relacion lineal).
+
+## Regresion armonica dinamica
+
+Utiliza Furiel (senos y cosenos) para predecir la estacionalidad.
